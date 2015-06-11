@@ -48,7 +48,7 @@ def protoWithProof():
     y,kw,tTilde = eval(w,t,x,msk,s)
 
     pi = prove(x, tTilde, kw, y)
-    verify(x, tTilde, y, pi, errorOnFail=True)
+    verify(x, t, y, pi, errorOnFail=True)
 
     z = deblind(r, y)
 
@@ -128,9 +128,9 @@ def repeat(func, n=100):
 
 # Run!
 if __name__ == "__main__":
-    # repeat(primitives)
-    # repeat(protoFast)
-    # repeat(protoWithProof)
+    repeat(primitives)
+    repeat(protoFast)
+    repeat(protoWithProof)
     # repeat(proofMethods)
-    repeat(protoProofG1)
-    repeat(protoProofGt)
+    # repeat(protoProofG1)
+    # repeat(protoProofGt)
