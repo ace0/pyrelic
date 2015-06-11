@@ -2,6 +2,7 @@
 Python interface to the RELIC cryptographic library.
 """
 import atexit, ctypes, sys
+from common import *
 
 # NOTE: This module was designed, built, and tested assuming that the RELIC
 #       C library was built on a 64-bit OSX platform. This module further
@@ -20,11 +21,11 @@ if sys.platform == "darwin":
     ext = "dylib"
 
 # Linux
-elif sys.platform == "linux":
+elif sys.platform.startswith("linux"):
     ext = "so"
 
 # Windows - this has never been tested
-elif sys.platform == "windows":
+elif sys.platform == "win32":
     ext = "dll"
 
 else:
@@ -34,7 +35,7 @@ else:
 
 # Basename for compiled relic library
 name = "librelic"
-location = "lib"
+location = "./lib"
 
 # Full path to librelic
 path = "{}/{}.{}".format(location, name, ext)
