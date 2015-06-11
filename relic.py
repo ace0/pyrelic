@@ -3,6 +3,7 @@ Python interface to the RELIC cryptographic library.
 """
 import atexit, ctypes, sys
 from common import *
+from os import path
 
 # NOTE: This module was designed, built, and tested assuming that the RELIC
 #       C library was built on a 64-bit OSX platform. This module further
@@ -33,15 +34,13 @@ else:
         "Windows are currently supported.")
 
 
-# Basename for compiled relic library
-name = "librelic"
-location = "./lib"
-
-# Full path to librelic
-path = "{}/{}.{}".format(location, name, ext)
+# Build the path to the librelic DLL
+name = "librelic." + ext
+moduleDirectory = path.dirname(__file__)
+libPath = path.join(moduleDirectory,  "lib", name)
 
 # Load the relic library
-librelic = ctypes.cdll.LoadLibrary(path)
+librelic = ctypes.cdll.LoadLibrary(libPath)
 
 # Initialize the RELIC core (memory allocation, error handling, and  
 # other internal state)
