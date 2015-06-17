@@ -1,13 +1,12 @@
 #!/usr/bin/eval python
-
 from testcommon import *
 import unittest
 from unittest import TestCase
-from prfp import *
+from vprf import *
 
 class PrfpTests(TestCase):
     """
-    Tests for the Vpop class.
+    Tests for the (unblinded) PRF protocol class.
     """
     def testKeyGen(self):
         msk = "12l3k4jh1lk23jh51l34b5l1k34j5nl134jn51lk3b51lk34b5"
