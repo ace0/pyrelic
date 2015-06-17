@@ -9,10 +9,6 @@ from ec import *
 from bi import *
 from common import *
 
-# Cached constant values
-ORDER_G1, ORDER_G2, ORDER_GT = (None, None, None)
-GENERATOR_G1, GENERATOR_G2, GENERATOR_GT = (None, None, None)
-
 
 class G1Element(ec1Element):
     """
@@ -276,7 +272,8 @@ def _scalarMultiply(P, a, n, relicScalarMult):
     relicScalarMult(byref(result), byref(P), byref(a))
     return result
 
-def _deserialize(x, element, compress, relicReadBinFunc):
+
+def _deserialize(x, elementType, compress, relicReadBinFunc):
     """
     Deserializes a bytearray @x, into an @element of the correct type,
     using the a relic read_bin function and the specified @compressed flag.
@@ -288,59 +285,70 @@ def _deserialize(x, element, compress, relicReadBinFunc):
     # The compression flag is an integer.
     flag = c_int(compress)
 
-    # Deserialize using the function and the element provided.
-    relicReadBinFunc(byref(element), byref(b), len(x), flag)
+    # Deserialize using the read function.
+    result = elementType()
+    relicReadBinFunc(byref(result), byref(b), len(x), flag)
+    return result
 
 
 def deserializeG1(x, compressed=True):
     """
     Deserializes an array of bytes, @x, into a G1 element.
     """
-    result = G1Element()
-    _deserialize(x, result, compressed, librelic.g1_read_bin_abi)
-    return result
+    return _deserialize(x, G1Element, compressed, librelic.g1_read_bin_abi)
 
 
 def deserializeG2(x, compressed=True):
     """
     Deserializes an array of bytes, @x, into a G2 element.
     """
-    result = G2Element()
-    _deserialize(x, result, compressed, librelic.g2_read_bin_abi)
-    return result
+    return _deserialize(x, G2Element, compressed, librelic.g2_read_bin_abi)
 
 
 def deserializeGt(x, compressed=True):
     """
     Deserializes an array of bytes, @x, into a Gt element.
     """
-    result = GtElement()
-    _deserialize(x, result, compressed, librelic.gt_read_bin_abi)
-    return result
+    return _deserialize(x, GtElement, compressed, librelic.gt_read_bin_abi)
+
+
+def _getCachedValue(obj, relicFunc, resultType):
+    """
+    Retrieves a value from obj.cached (if not None) or calls @relicFunc and 
+    caches the result (of @resultType) int obj.cached.
+
+    This is a common implementation for orderG1/G2/Gt and generatotG1/G2/Gt
+    """
+    # If the value has not been previously cached, fetch 
+    if not obj.cached:
+        obj.cached = resultType()
+        relicFunc(byref(obj.cached))
+    return obj.cached
 
 
 def generatorG1():
     """
     Retrieves the generator <P> = G1
     """
-    # If we don't have the generator, grab it and cache it.
-    global GENERATOR_G1
-    if not GENERATOR_G1:
-        GENERATOR_G1 = G1Element()
-        librelic.g1_get_gen_abi(byref(GENERATOR_G1))
-    return GENERATOR_G1
+    return _getCachedValue(generatorG1, librelic.g1_get_gen_abi, G1Element)
+
+
+def generatorG2():
+    """
+    Retrieves the generator <P> = G2
+    """
+    return _getCachedValue(generatorG2, librelic.g2_get_gen_abi, G2Element)
 
 
 def generatorGt():
     """
     Retrieves the generator <g> = Gt
     """
-    # If we don't have the generator, grab it and cache it.
-    global GENERATOR_GT
-    if not GENERATOR_GT:
-        GENERATOR_GT = GtElement()
-        librelic.gt_get_gen(byref(GENERATOR_GT))
-    return GENERATOR_GT
+    return _getCachedValue(generatorGt, librelic.gt_get_gen, GtElement)
+
+
+# Initialize generator cached values to None
+generatorG1.cached, generatorG2.cached, generatorGt = None, None, None
 
 
 def getBuffer(x):
@@ -348,13 +356,7 @@ def getBuffer(x):
     Copy @x into a (modifiable) ctypes byte array
     """
     b = bytes(x)
-    return (c_ubyte * len(b)).from_buffer_copy(b)
-
-
-def combineHashInputs(inputs):
-    """
-    Combine a list of @inputs in an unambiguous way so that they can be hashed.
-    """
+    return (c_ubyte * len(b)).from_buffer_copy(bytes(x))
 
 
 
@@ -363,21 +365,29 @@ def _hash(x, elementType, relicHashFunc):
     Hash an array of bytes, @x, using @relicHashFunc and returns the result
     of @elementType.
     """
+    # Combine all inputs into a single bytearray
+    barray = bytearray()
+    map(barray.extend, bytes(x))
+
+    # Create an element of the correct type to hold the hash result
     result = elementType()
-    buf = getBuffer(x)
+
+    # Convert barray into a modifiable ctypes buffer, hash using the provided
+    # function, and return the result.
+    buf = getBuffer(barray)
     relicHashFunc(byref(result), byref(buf), sizeof(buf))
-    return result   
+    return result
 
 
-def hashG1(x):
+def hashG1(*args):
     """
     Hash an array of bytes, @x, onto the group G1. 
     @returns a G1Element.
     """
-    return _hash(x, G1Element, librelic.g1_map_abi)
+    return _hash(args, G1Element, librelic.g1_map_abi)
 
 
-def hashG2(x):
+def hashG2(*x):
     """
     Hash an array of bytes, @x, onto the group G2.
     @returns a G2Element.
@@ -389,34 +399,25 @@ def orderG1():
     """
     Retrieves the order (size) of group G1 as a BigInt.
     """
-    global ORDER_G1
-    if not ORDER_G1:
-        ORDER_G1 = BigInt()
-        librelic.gt_get_ord_abi(byref(ORDER_G1))
-    return ORDER_G1
+    return _getCachedValue(orderG1, librelic.g1_get_ord_abi, BigInt)
 
 
 def orderG2():
     """
     Retrieves the order (size) of group G2 as a BigInt.
     """
-    global ORDER_G2
-    if not ORDER_G2:
-        ORDER_G2 = BigInt()
-        librelic.g2_get_ord_abi(byref(ORDER_G2))
-    return ORDER_G2
+    return _getCachedValue(orderG2, librelic.g2_get_ord_abi, BigInt)
 
 
 def orderGt():
     """
     Retrieves the order (size) of group Gt as a BigInt.
     """
-    # Don't lookup the order of GT every time: cache on the first request.
-    global ORDER_GT
-    if not ORDER_GT:
-        ORDER_GT = BigInt()
-        librelic.gt_get_ord_abi(byref(ORDER_GT))
-    return ORDER_GT
+    return _getCachedValue(orderGt, librelic.gt_get_ord_abi, BigInt)
+
+
+# Initialize cached values to None
+orderG1.cached, orderG2.cached, orderGt.cached = None, None, None
 
 
 def pair(p,q):

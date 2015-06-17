@@ -25,7 +25,8 @@ def eval(w,t,x,msk,s):
 
     # Multiply x by kw (it's fastest this way), hash the tweak, and compute
     # the pairing.
-    y = pair(x*kw, hashG2(t))
+    tTilde = hashG2(t)
+    y = pair(x*kw, tTilde)
     return y,kw,tTilde
 
 

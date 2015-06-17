@@ -15,68 +15,6 @@ class PbcTests(TestCase):
     """
     Tests for the pairing-based crypto classes and related module functions.
     """
-    def testHashG1Same(self):
-        self.hashSame(hashG1)
-
-    def testHashG2Same(self):
-        self.hashSame(hashG2)
-
-    def testHashG1Different(self):
-        self.hashDifferent(hashG1)
-
-    def testHashG2Different(self):
-        self.hashDifferent(hashG2)
-
-    def testHashG1Type(self):
-        self.hashType(hashG1, G1Element)
-
-    def testHashG2Type(self):
-        self.hashType(hashG2, G2Element)
-
-
-    def hashType(self, hashfunc, expectedType):
-        """
-        Tests the type of the hash output
-        """
-        m = "This is a very long string. It makes a nice test message."
-        h = hashfunc(m)
-        self.assertTrue( isinstance(h, expectedType) )
-
-
-    def hashSame(self, hashfunc):
-        """
-        Each hash of the same string must give the same result
-        """
-        # We want to messages that give the same bytes, but are not identical
-        # objects.
-        m1 = "This is a very long string. It makes a nice test message."
-        m2 = "This is a very long string." + " It makes a nice" + " test message."
-
-        # Ensure we have two unique objects with identical values
-        self.assertEqual(m1, m2)
-        self.assertIsNot(m1, m2)
-
-        h1 = hashfunc(m1)
-        h2 = hashfunc(m2)
-        self.assertEqual(h1, h2)
-
-
-    def hashDifferent(self, hashfunc):
-        """
-        Hashes of different strings must give unique results.
-        """
-        # We want to messages that give the same bytes, but are not identical
-        # objects.
-        m1 = "This is a test hash input"
-        m2 = "This is a distinctly different hash inputs from m1."
-
-        h1 = hashfunc(m1)
-        h2 = hashfunc(m2)
- 
-        # Ensure the results are distinct.
-        self.assertNotEqual(h1, h2)
-
-
     def testPair(self):
         """
         Test pairing funciton by checking the multiplicative homomorphic 
@@ -111,6 +49,92 @@ class PbcTests(TestCase):
         Grab @n random elements from Z an ensure there are no duplicates. 
         """
         randomNoRepeat(randomZ)
+
+
+class HashTestBase(TestCase):
+    """
+    Base class for testing hashG1 and hashG2 functions.
+    """
+    def setUp(self):
+        raise unittest.SkipTest("Base class")
+
+
+    def testHashType(self):
+        """
+        Tests the type of the hash output
+        """
+        m = "This is a very long string. It makes a nice test message."
+        h = self.hashfunc(m)
+        self.assertTrue( isinstance(h, self.expectedType) )
+
+
+    def testHashSame(self):
+        """
+        Each hash of the same string must give the same result
+        """
+        # We want to messages that give the same bytes, but are not identical
+        # objects.
+        m1 = "This is a very long string. It makes a nice test message."
+        m2 = "This is a very long string." + " It makes a nice" + " test message."
+
+        # Ensure we have two unique objects with identical values
+        self.assertEqual(m1, m2)
+        self.assertIsNot(m1, m2)
+
+        h1 = self.hashfunc(m1)
+        h2 = self.hashfunc(m2)
+        self.assertEqual(h1, h2)
+
+
+    def testHashDifferent(self):
+        """
+        Hashes of different strings must give unique results.
+        """
+        # We want to messages that give the same bytes, but are not identical
+        # objects.
+        m1 = "This is a test hash input"
+        m2 = "This is a distinctly different hash inputs from m1."
+
+        h1 = self.hashfunc(m1)
+        h2 = self.hashfunc(m2)
+ 
+        # Ensure the results are distinct.
+        self.assertNotEqual(h1, h2)
+
+
+    def testHashMultiple(self):
+        """
+        Test hashing multiple arguments.
+        """
+        m1 = "First hash input"
+        m2 = 981723509871230498709871234
+        m3 = "Third input"
+
+        h1a = self.hashfunc(m1, m2, m3)
+        h1b = self.hashfunc(m1, m2, m3)
+        h2 = self.hashfunc(m2, m1, m3)
+        h3 = self.hashfunc(m1, m2)
+
+        # Same inputs should give the same result
+        self.assertEqual(h1a, h1b)
+
+        # Different inputs (or order) should give different results.
+        self.assertNotEqual(h1a, h2)
+        self.assertNotEqual(h2, h3)
+        self.assertNotEqual(h1a, h3)
+
+
+class PbcHashG1Test(HashTestBase):
+    def setUp(self):
+        self.hashfunc = hashG1
+        self.expectedType = G1Element
+
+
+class PbcHashG2Test(HashTestBase):
+    def setUp(self):
+        self.hashfunc = hashG2
+        self.expectedType = G2Element
+
 
 
 import base64

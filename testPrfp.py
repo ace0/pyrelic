@@ -47,7 +47,7 @@ class PrfpTests(TestCase):
         kw = randomZ()
         x = randomG1()
         t = ";lkjasd;flkqj23;lrkqm2d;lkmq3;klmq3; tcq93u4 t[0q34 pq9j43p9jq3 4p"
-        beta = hashG1(long(kw) + t + m)
+        beta = hashG1(str(long(kw)) + t + m)
         y = pair(x*kw, tTilde)
 
         pi = prove(x, tTilde, kw, y)
