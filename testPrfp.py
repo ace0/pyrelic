@@ -16,7 +16,7 @@ class PrfpTests(TestCase):
         genKw(w,msk,z)
 
 
-    def testEvalStable(self, n=100):
+    def testEvalTypes(self, n=100):
         """
         Runs eval() @n times and ensures that after deblinding, the result
         is deterministic.
@@ -45,13 +45,13 @@ class PrfpTests(TestCase):
         using randomly selected inputs.
         """
         kw = randomZ()
-        x = randomG1()
+        m = "This is a secret message in plain view"
         t = ";lkjasd;flkqj23;lrkqm2d;lkmq3;klmq3; tcq93u4 t[0q34 pq9j43p9jq3 4p"
-        beta = hashG1(str(long(kw)) + t + m)
-        y = pair(x*kw, tTilde)
+        beta = hashG1(t, m)
+        y = beta*kw
 
-        pi = prove(x, tTilde, kw, y)
-        self.assertTrue( verify(x, t, y, pi, errorOnFail=False) )
+        pi = prove(beta, kw, y)
+        self.assertTrue( verify(m, t, y, pi, errorOnFail=False) )
 
 
     def testBadProof(self):

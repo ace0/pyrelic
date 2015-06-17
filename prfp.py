@@ -49,7 +49,7 @@ def prove(beta,kw,y):
     # Compute the proof.
     Q = generatorG1()
     p = Q*kw
-    v = randomZ(orderGt())
+    v = randomZ(orderG1())
     t1 = Q*v
     t2 = beta*v
 
@@ -57,7 +57,7 @@ def prove(beta,kw,y):
     t2.normalize()
 
     c = hashZ(Q,p,beta,y,t1,t2)
-    u = (v-(c*kw)) % orderGt()
+    u = (v-(c*kw)) % orderG1()
     return (p,c,u)
 
 
@@ -70,8 +70,9 @@ def verify(m, t, y, pi, errorOnFail=True):
     p,c,u = pi
 
     # Verify types
-    assertType(x, G1Element)
-    assertType(y, GtElement)
+    assertType(m, str)
+    assertType(t, str)
+    assertType(y, G1Element)
     assertType(p, G1Element)
     assertScalarType(c)
     assertScalarType(u)
@@ -82,7 +83,7 @@ def verify(m, t, y, pi, errorOnFail=True):
 
     # Recompute c'
     t1 = Q*u + p*c 
-    t2 = beta*u * y*c
+    t2 = beta*u + y*c
 
     t1.normalize()
     t2.normalize()
