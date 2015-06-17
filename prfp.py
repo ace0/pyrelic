@@ -31,7 +31,7 @@ def eval(w,t,m,msk,s):
     kw = genKw(w,msk,s)
 
     # Conmpute y
-    beta = hashG1(t + m)
+    beta = hashG1(t, m)
     y = beta*kw
     return y,kw,beta
 

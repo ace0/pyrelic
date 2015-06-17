@@ -2,6 +2,16 @@
 Common testing routines
 """
 
+import random, string
+
+def randomstr(n=64):
+    """
+    Generate a random string of length @n.
+    """
+    pop = string.digits + string.lowercase + string.uppercase
+    return ''.join(random.choice(pop) for _ in range(n))
+
+
 def randomNoRepeat(func, n=100):
     """
     Grab @n elements using @func and ensure there are no duplicates 

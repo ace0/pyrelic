@@ -45,8 +45,8 @@ class PrfpTests(TestCase):
         using randomly selected inputs.
         """
         kw = randomZ()
-        m = "This is a secret message in plain view"
-        t = ";lkjasd;flkqj23;lrkqm2d;lkmq3;klmq3; tcq93u4 t[0q34 pq9j43p9jq3 4p"
+        m = randomstr()
+        t = randomstr()
         beta = hashG1(t, m)
         y = beta*kw
 
@@ -59,96 +59,64 @@ class PrfpTests(TestCase):
         Tests that an invalid proof is reported as invalid.
         """
         kw = randomZ()
-        x = randomG1()
-        t = long(randomZ())
-        tTilde = hashG2(t)
-        y = randomGt()
+        m = randomstr()
+        t = randomstr()
+        beta = hashG1(t, m)
+        y = randomG1()
 
-        pi = prove(x, tTilde, kw, y)
-        self.assertFalse( verify(x, t, y, pi, errorOnFail=False) )
+        pi = prove(beta, kw, y)
+        self.assertFalse( verify(m, t, y, pi, errorOnFail=False) )
 
 
     def testBadPubkey(self):
         """
         Tests that an invalid proof with a bad pubkey is reported invalid.
         """
+        # Generate a correct result @y and proof using random inputs.
         kw = randomZ()
-        x = randomG1()
-        t = randomZ()
-        tTilde = hashG2(t)
-        y = pair(x*kw, tTilde)
+        m = randomstr()
+        t = randomstr()
+        beta = hashG1(t, m)
+        y = beta*kw
 
         # Generate a valid proof
-        (p,c,u) = prove(x, tTilde, kw, y)
+        (p,c,u) = prove(beta, kw, y)
 
         # Swap out the pubkey p with a bogus value
         badP = randomG1()
         pi = (badP, c, u)
 
-        self.assertFalse( verify(x, t, y, pi, errorOnFail=False) )
+        self.assertFalse( verify(m, t, y, pi, errorOnFail=False) )
 
 
     def testVerifyFailRandom(self, n=100):
         """
         Tests that random inputs are not reported as a valid proof.
         """
-        x = randomG1()
-        t = randomZ()
-        y = randomGt()
-        pi = (randomG1(), randomZ(orderGt()), randomZ(orderGt()))
-        self.assertFalse( verify(x, t, y, pi, errorOnFail=False) )
+        m = randomstr()
+        t = randomstr()
+        y = randomG1()
+        pi = (randomG1(), randomZ(orderG1()), randomZ(orderG1()))
+        self.assertFalse( verify(m, t, y, pi, errorOnFail=False) )
 
 
     def testProtocol(self):
         """
         Tests a full pass of the protocol.
         """
-        # TODO: Factor these into class variables
         w = "Some super-secret ensemble key selector"
         t = "Totally random and unpredictable tweak"
         m = "This is a secret message"
-        msk = "lkjasdf;lkjas;dlkfa;slkdf;laskdjf"
-        s = "Super secret table value"
+        msk = randomstr()
+        s = randomstr()
 
         # Run the protocol 
-        r, x = blind(m)
-        y,kw,tTilde = eval(w,t,x,msk,s)
-        pi = prove(x, tTilde, kw, y)
-        z = deblind(r, y)
+        y,kw,beta = eval(w,t,m,msk,s)
+        pi = prove(beta, kw, y)
 
         # Check the proof
-        self.assertTrue( verify(x, t, y, pi) )
+        self.assertTrue( verify(m, t, y, pi, errorOnFail=False) )
 
-
-    def testProtocolStable(self, n=10):
-        """
-        Tests that multiple passes of the protocol produce the same z,p values.
-        """
-        w = "Some super-secret ensemble key selector"
-        t = "Totally random and unpredictable tweak"
-        m = "This is a secret message"
-        msk = "lkjasdf;lkjas;dlkfa;slkdf;laskdjf"
-        s = "Super secret table value"
-
-        # Run the protocol and report the z,p values
-        def proto():
-            r, x = blind(m)
-            y,kw,tTilde = eval(w,t,x,msk,s)
-            (p,_,_) = prove(x, tTilde, kw, y)
-            z = deblind(r, y)
-            return z,p
-
-        # Establish initial values
-        Z,P = proto()
-        Zinv = ~Z
-
-        # Run the protocol and check the results against expected results
-        def protoCheck():
-            z,p = proto()
-            self.assertTrue(z == Z or z == Zinv)
-            self.assertEqual(P, p)
-
-        repeat(protoCheck, n=n)
 
 # Run!
 if __name__ == '__main__':

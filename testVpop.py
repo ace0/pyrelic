@@ -156,12 +156,11 @@ class VpopTests(TestCase):
 
         # Establish initial values
         Z,P = proto()
-        Zinv = ~Z
 
         # Run the protocol and check the results against expected results
         def protoCheck():
             z,p = proto()
-            self.assertTrue(z == Z or z == Zinv)
+            self.assertTrue(z == Z)
             self.assertEqual(P, p)
 
         repeat(protoCheck, n=n)
