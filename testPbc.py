@@ -16,14 +16,34 @@ class PbcTests(TestCase):
     Tests for the pairing-based crypto classes and related module functions.
     """
     def testHashG1Same(self):
-        self.hashTest(hashG1)
-
+        self.hashSame(hashG1)
 
     def testHashG2Same(self):
-        self.hashTest(hashG2)
+        self.hashSame(hashG2)
+
+    def testHashG1Different(self):
+        self.hashDifferent(hashG1)
+
+    def testHashG2Different(self):
+        self.hashDifferent(hashG2)
+
+    def testHashG1Type(self):
+        self.hashType(hashG1, G1Element)
+
+    def testHashG2Type(self):
+        self.hashType(hashG2, G2Element)
 
 
-    def hashTest(self, hashfunc):
+    def hashType(self, hashfunc, expectedType):
+        """
+        Tests the type of the hash output
+        """
+        m = "This is a very long string. It makes a nice test message."
+        h = hashfunc(m)
+        self.assertTrue( isinstance(h, expectedType) )
+
+
+    def hashSame(self, hashfunc):
         """
         Each hash of the same string must give the same result
         """
@@ -41,6 +61,22 @@ class PbcTests(TestCase):
         self.assertEqual(h1, h2)
 
 
+    def hashDifferent(self, hashfunc):
+        """
+        Hashes of different strings must give unique results.
+        """
+        # We want to messages that give the same bytes, but are not identical
+        # objects.
+        m1 = "This is a test hash input"
+        m2 = "This is a distinctly different hash inputs from m1."
+
+        h1 = hashfunc(m1)
+        h2 = hashfunc(m2)
+ 
+        # Ensure the results are distinct.
+        self.assertNotEqual(h1, h2)
+
+
     def testPair(self):
         """
         Test pairing funciton by checking the multiplicative homomorphic 
@@ -54,30 +90,6 @@ class PbcTests(TestCase):
         t2 = pair(p,q*r)
 
         self.assertEqual(t1, t2)
-
-
-    def testFastMultiplyG2Correct(self):
-        """
-        Tests that fast multiplication is correct by cross-checking with slow 
-        multiplication.
-        """
-        p = randomG2()
-        r = randomZ()
-        q1 = p.mul_fast(r)
-        q2 = p.mul_basic(r)
-        self.assertEqual(q1, q2)
-
-
-    def testFastMultiplyG2Faster(self):
-        """
-        Ensures that fast multiplication is indeed faster than basic multiply.
-        """
-        p = randomG2()
-        r = randomZ()
-
-        fastTime = timeit(lambda:p.mul_fast(r), number=100)
-        basicTime = timeit(lambda:p.mul_basic(r), number=100)
-        self.assertLess(fastTime, basicTime)
 
 
     def testRandomG1(self):

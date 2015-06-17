@@ -351,16 +351,30 @@ def getBuffer(x):
     return (c_ubyte * len(b)).from_buffer_copy(b)
 
 
+def combineHashInputs(inputs):
+    """
+    Combine a list of @inputs in an unambiguous way so that they can be hashed.
+    """
+
+
+
+def _hash(x, elementType, relicHashFunc):
+    """
+    Hash an array of bytes, @x, using @relicHashFunc and returns the result
+    of @elementType.
+    """
+    result = elementType()
+    buf = getBuffer(x)
+    relicHashFunc(byref(result), byref(buf), sizeof(buf))
+    return result   
+
+
 def hashG1(x):
     """
     Hash an array of bytes, @x, onto the group G1. 
     @returns a G1Element.
     """
-    # Call the map function and return the result.
-    buf = getBuffer(x)
-    result = G1Element()
-    librelic.g1_map_abi(byref(result), byref(buf), sizeof(buf))
-    return result
+    return _hash(x, G1Element, librelic.g1_map_abi)
 
 
 def hashG2(x):
@@ -368,11 +382,7 @@ def hashG2(x):
     Hash an array of bytes, @x, onto the group G2.
     @returns a G2Element.
     """ 
-    # Call the map function and return the result.
-    buf = getBuffer(x)
-    result = G2Element()
-    librelic.g2_map_abi(byref(result), byref(buf), sizeof(buf))
-    return result
+    return _hash(x, G2Element, librelic.g2_map_abi)
 
 
 def orderG1():
@@ -424,31 +434,34 @@ def pair(p,q):
     return result
 
 
+def _random(elementType, relicRandomFunc):
+    """
+    Retrieves a random element of @elementType by calling @relicRandomFunc.
+    """
+    result = elementType()
+    relicRandomFunc(byref(result))
+    return result
+
+
 def randomG1():
     """
     Select a random element from G1.
     """
-    result = G1Element()
-    librelic.g1_rand_abi(byref(result))
-    return result
+    return _random(G1Element, librelic.g1_rand_abi)
 
 
 def randomG2():
     """
     Select a random element from G2.
     """
-    result = G2Element()
-    librelic.g2_rand_abi(byref(result))
-    return result
+    return _random(G2Element, librelic.g2_rand_abi)
 
 
 def randomGt():
     """
     Select a random element from Gt.
     """
-    result = GtElement()
-    librelic.gt_rand(byref(result))
-    return result
+    return _random(GtElement, librelic.gt_rand)
 
 
 def _serialize(element, compress, relicSizeBinFunc, relicWriteBinFunc):
