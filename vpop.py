@@ -122,5 +122,9 @@ def deblind(rInv,y):
     return y ** rInv
 
 
-# Decode/deserialize intermediate result Y
+# Decode/deserialize elements by name
+unwrapX = unwrapG1
 unwrapY = unwrapGt
+unwrapP = unwrapG1
+unwrapC = unwrapLong
+unwrapU = unwrapLong

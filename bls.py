@@ -1,12 +1,11 @@
 """
-An (unblinded) verifiable, pseudorandom function (V PRF) designed to work with 
-Pythia API. For simplicity, this particular implementation uses G1 from the BN
-pairing-based curves, but any elliptic curve with sufficient security would 
-also suffice.
+An (unblinded) pseudorandom function based on Boneh-Lynn-Shacham signatures 
+designed for the Pythia API using BN254 pairing based curves.
 """
 from pbc import *
 from common import *
 from prf import *
+
 
 def eval(w,t,x,msk,s):
     """
@@ -19,7 +18,7 @@ def eval(w,t,x,msk,s):
     @returns: (y, kw, dummy=None)
      where: y: intermediate result
             kw: secret key bound to w (needed for proof)
-            beta: H(kw,t,x) (needed for proof)
+            dummy: None (included only for compatibility with Pythia PRF API)
     """
     # Verify types
     assertType(w, (str, int, long))
@@ -29,35 +28,21 @@ def eval(w,t,x,msk,s):
     # Construct the key
     kw = genKw(w,msk,s)
 
-    # Conmpute y
-    beta = hashG1(t, x)
-    y = beta*kw
-    return y,kw,beta
+    # Compute y
+    y = hashG1(t, x)*kw
+    return y,kw,None
 
 
-def prove(x,beta,kw,y):
+def prove(x,t,kw,y):
     """
-    Generate a zero-knowledge proof that DL(Q*kw) = DL(beta*kw) where
-    <Q> = G1.
+    Computes public key P*kw where <P> = G1. 
+    x, t, and y are ignored. They are included only for API compatibility with 
+    other Pythia PRF implementations.
     """
-    # Verify types
+    # Verify the key type and compute the pubkey
     assertScalarType(kw)
-    assertType(beta, G1Element)
-    assertType(y, G1Element)
-
-    # Compute the proof.
-    Q = generatorG1()
-    p = Q*kw
-    v = randomZ(orderG1())
-    t1 = Q*v
-    t2 = beta*v
-
-    t1.normalize()
-    t2.normalize()
-
-    c = hashZ(Q,p,beta,y,t1,t2)
-    u = (v-(c*kw)) % orderG1()
-    return (p,c,u)
+    p = generatorG2() * kw
+    return (p,None,None)
 
 
 def verify(x, t, y, pi, errorOnFail=True):
@@ -66,35 +51,27 @@ def verify(x, t, y, pi, errorOnFail=True):
     @errorOnFail: Raise an exception if the proof does not hold.
     """
     # Unpack the proof
-    p,c,u = pi
+    p,_,_ = pi
 
     # Verify types
     assertType(x, str)
     assertType(t, str)
     assertType(y, G1Element)
-    assertType(p, G1Element)
-    assertScalarType(c)
-    assertScalarType(u)
+    assertType(p, G2Element)
 
     # TODO: beta can be pre-computed while waiting for a server response.
-    Q = generatorG1()
     beta = hashG1(t, x)
 
-    # Recompute c'
-    t1 = Q*u + p*c 
-    t2 = beta*u + y*c
+    # Compute q = e( H(t,m), P)**kw two ways
+    q1 = pair(beta, p)
+    q2 = pair(y, generatorG2())
 
-    t1.normalize()
-    t2.normalize()
-
-    cPrime = hashZ(Q,p,beta,y,t1,t2)
-
-    # Check computed @c' against server's value @c
-    if cPrime == c:
+    # The BLS signature is valid when q1 == q2
+    if q1 == q2:
         return True
 
     if errorOnFail:
-        raise Exception("zero-knowledge proof failed verification.")
+        raise Exception("BLS signature failed verification")
     else:
         return False
 

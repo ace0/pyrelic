@@ -2,11 +2,12 @@
 from testcommon import *
 import unittest
 from unittest import TestCase
-from vprf import *
+from bls import *
+from common import hmac
 
-class VprfTests(TestCase):
+class BlsTests(TestCase):
     """
-    Tests for the (unblinded) verifiable PRF class.
+    Tests for the BLS PRF
     """
     def testEvalStable(self, n=10):
         """
@@ -42,7 +43,7 @@ class VprfTests(TestCase):
         beta = hashG1(t, m)
         y = beta*kw
 
-        pi = prove(None, beta, kw, y)
+        pi = prove(None, None, kw, None)
         self.assertTrue( verify(m, t, y, pi, errorOnFail=False) )
 
 
@@ -53,10 +54,9 @@ class VprfTests(TestCase):
         kw = randomZ()
         m = randomstr()
         t = randomstr()
-        beta = hashG1(t, m)
         y = randomG1()
 
-        pi = prove(None, beta, kw, y)
+        pi = prove(None, None, kw, None)
         self.assertFalse( verify(m, t, y, pi, errorOnFail=False) )
 
 
@@ -72,11 +72,11 @@ class VprfTests(TestCase):
         y = beta*kw
 
         # Generate a valid proof
-        (p,c,u) = prove(None, beta, kw, y)
+        (p,c,u) = prove(None, None, kw, None)
 
         # Swap out the pubkey p with a bogus value
-        badP = randomG1()
-        pi = (badP, c, u)
+        badP = randomG2()
+        pi = (badP, None, None)
 
         self.assertFalse( verify(m, t, y, pi, errorOnFail=False) )
 
@@ -88,7 +88,7 @@ class VprfTests(TestCase):
         m = randomstr()
         t = randomstr()
         y = randomG1()
-        pi = (randomG1(), randomZ(orderG1()), randomZ(orderG1()))
+        pi = (randomG2(), None, None)
         self.assertFalse( verify(m, t, y, pi, errorOnFail=False) )
 
 
@@ -99,15 +99,17 @@ class VprfTests(TestCase):
         w = "Some super-secret ensemble key selector"
         t = "Totally random and unpredictable tweak"
         m = "This is a secret message"
+        salt = randomstr()
+        x = hmac(salt, m)
         msk = randomstr()
         s = randomstr()
 
         # Run the protocol 
-        y,kw,beta = eval(w,t,m,msk,s)
-        pi = prove(None, beta, kw, y)
+        y,kw,beta = eval(w,t,x,msk,s)
+        pi = prove(None, None, kw, None)
 
         # Check the proof
-        self.assertTrue( verify(m, t, y, pi, errorOnFail=False) )
+        self.assertTrue( verify(x, t, y, pi, errorOnFail=False) )
 
 
 # Run!
