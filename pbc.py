@@ -36,10 +36,11 @@ class G1Element(ec1Element):
         """
         Multiplies this G1Element with a scalar of integer type.
         """
-        # Always prefer the generator multiply routine if applicable.
-        # if self is generatorG1():
-        #     return _genMultiply(other, G1Element, orderG1(), 
-        #         librelic.g1_mul_gen_abi)
+        # Always prefer the generator multiply routine when possible. It's
+        # roughly 2x faster.
+        if self is generatorG1():
+            return _genMultiply(other, G1Element, orderG1(), 
+                librelic.g1_mul_gen_abi)
 
         # Otherwise use the normal scalar multiply routine.
         return _scalarMultiply(self, other, orderG1(), librelic.g1_mul_abi)
@@ -97,10 +98,11 @@ class G2Element(ec2Element):
         """
         Multiplies this G2Element with a BigInt or Python long value.
         """
-        # Always prefere the generator multiply routine if we can.
-        # if self is generatorG2():
-        #     return _genMultiply(other, G2Element, orderG2(),
-        #         librelic.g2_mul_gen_abi)
+        # Always prefer the generator multiply routine when possible. It's
+        # roughly 2x faster.
+        if self is generatorG2():
+            return _genMultiply(other, G2Element, orderG2(),
+                librelic.g2_mul_gen_abi)
 
         # Multiplication in G2 is so slow. On our development platform
         # it was 33% faster to build and use a precomputation table using the 
