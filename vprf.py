@@ -29,7 +29,7 @@ def eval(w,t,x,msk,s):
     # Construct the key
     kw = genKw(w,msk,s)
 
-    # Conmpute y
+    # Compute y
     beta = hashG1(t, x)
     y = beta*kw
     return y,kw,beta
@@ -98,6 +98,13 @@ def verify(x, t, y, pi, errorOnFail=True):
     else:
         return False
 
+
+# Blind/deblind are more or less the identity function. Included for
+# API compatibility with the other Pythia PRFs.
+blind = lambda m: (None, m)
+
+def deblind(r,x):
+    return x
 
 # unwrap (decode and deserialize) elements by name
 unwrapY = unwrapG1

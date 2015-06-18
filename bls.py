@@ -76,11 +76,18 @@ def verify(x, t, y, pi, errorOnFail=True):
         return False
 
 
+# Blind/deblind are more or less the identity function. Only included for
+# API compatibility with the other Pythia PRFs.
+blind = lambda m: (None, m)
+
+def deblind (r,x): 
+    return x
+
 # unwrap (decode and deserialize) elements by name
 unwrapY = unwrapG1
-unwrapP = unwrapG1
-unwrapC = unwrapLong
-unwrapU = unwrapLong
+unwrapP = unwrapG2
+unwrapC = lambda x: None
+unwrapU = lambda x: None
 
 # We don't do any decoding or deserialization of the message parameter x in
 # this version of the protocol.

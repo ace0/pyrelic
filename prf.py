@@ -35,7 +35,7 @@ def wrap(x):
         return _wrap(x, serializeGt)
 
     elif isinstance(x, str):        
-        return base64.urlsafe_b64encode(x)
+        return x
 
     elif isinstance(x, (int, long, BigInt)):
         return hex(long(x))
@@ -48,7 +48,7 @@ def wrap(x):
 
 
 # Individual unwrap functions
-unwrapStr = lambda x: base64.urlsafe_b64decode(x)
+unwrapStr = lambda x: x
 unwrapG1 = lambda x: _unwrap(x, deserializeG1)
 unwrapG2 = lambda x: _unwrap(x, deserializeG2)
 unwrapGt = lambda x: _unwrap(x, deserializeGt)

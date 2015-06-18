@@ -19,14 +19,19 @@ def primitives():
     # G1 operations
     P = randomG1()
     Q = hashG1(w)
+    R = generatorG1()
     g1Add = P + Q
     g1ScalarMultiply = z*P
+    g1GeneratorMultiply = z*R
 
     # G2 operations
     P = randomG2()
     Q = hashG2(w)
+    R = generatorG2()
     g2Add = P + Q
     g2ScalarMultiply = z*P
+    g2GeneratorMultiply = z*R
+
 
     # Gt operations
     P = randomGt()

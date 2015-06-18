@@ -36,6 +36,12 @@ class G1Element(ec1Element):
         """
         Multiplies this G1Element with a scalar of integer type.
         """
+        # Always prefer the generator multiply routine if applicable.
+        # if self is generatorG1():
+        #     return _genMultiply(other, G1Element, orderG1(), 
+        #         librelic.g1_mul_gen_abi)
+
+        # Otherwise use the normal scalar multiply routine.
         return _scalarMultiply(self, other, orderG1(), librelic.g1_mul_abi)
 
 
@@ -91,10 +97,15 @@ class G2Element(ec2Element):
         """
         Multiplies this G2Element with a BigInt or Python long value.
         """
-        # Multiplication in G2 is so slow. Under our development implementation
+        # Always prefere the generator multiply routine if we can.
+        # if self is generatorG2():
+        #     return _genMultiply(other, G2Element, orderG2(),
+        #         librelic.g2_mul_gen_abi)
+
+        # Multiplication in G2 is so slow. On our development platform
         # it was 33% faster to build and use a precomputation table using the 
         # LWNAF algorithm than to use the default, basic, multiplication.
-        return self.mul_fast(other)
+        return self.mul_table(other)
 
 
     def inverse(self):
@@ -122,7 +133,7 @@ class G2Element(ec2Element):
         return _scalarMultiply(self, other, orderG2(), librelic.g2_mul_abi)
 
 
-    def mul_fast(self, other):
+    def mul_table(self, other):
         """
         Fast multiplication using a the LWNAF precomputation table.
         """
@@ -270,6 +281,24 @@ def _scalarMultiply(P, a, n, relicScalarMult):
     # Create a point to hold the result and multiply.
     result = type(P)()
     relicScalarMult(byref(result), byref(P), byref(a))
+    return result
+
+
+def _genMultiply(a, element, n, relicGenMultiplyFunc):
+    """
+    Multiplies scalar @a by the group generator using @relicGenMultiplyFunc
+    and returns the result of type @element.
+    """
+    # Ensure the scalar is a BigInt
+    a = coerceBigInt(a)
+    if not a:
+        return NotImplemented
+
+    # Shrink large scalars.
+    a %= n
+
+    result = element()
+    relicGenMultiplyFunc(byref(result), byref(a))
     return result
 
 
