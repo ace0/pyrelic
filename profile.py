@@ -1,13 +1,16 @@
 # from vpopProfile import *
 from vpop import *
+from testcommon import *
 
 # Arbitrary operands for our protocol
 w = "Some super-secret ensemble key selector"
 t = "Totally random and unpredictable tweak"
 m = "This is a secret message"
-msk = "lkjasdf;lkjas;dlkfa;slkdf;laskdjf"
+msk = randomstr(n=64)
 s = "Super secret table value"
+hash_in = randomstr(n=64)
 
+iterations = 10000
 
 @profile
 def primitives():
@@ -17,21 +20,20 @@ def primitives():
     z = randomZ(orderG1())
 
     # G1 operations
-    P = randomG1()
-    Q = hashG1(w)
+    P,Q = randomG1(),randomG1()
     R = generatorG1()
     g1Add = P + Q
     g1ScalarMultiply = z*P
     g1GeneratorMultiply = z*R
+    g1Hash = hashG1(hash_in)
 
     # G2 operations
-    P = randomG2()
-    Q = hashG2(w)
+    P,Q = randomG2(),randomG2()
     R = generatorG2()
     g2Add = P + Q
     g2ScalarMultiply = z*P
     g2GeneratorMultiply = z*R
-
+    g2hash = hashG2(hash_in)
 
     # Gt operations
     P = randomGt()
@@ -124,7 +126,7 @@ def protoFast():
     z = deblind(r, y)
 
 
-def repeat(func, n=100):
+def repeat(func, n=iterations):
     """
     Call @func @n times.
     """
@@ -134,8 +136,8 @@ def repeat(func, n=100):
 # Run!
 if __name__ == "__main__":
     repeat(primitives)
-    repeat(protoFast)
-    repeat(protoWithProof)
+    # repeat(protoFast)
+    # repeat(protoWithProof)
     # repeat(proofMethods)
     # repeat(protoProofG1)
     # repeat(protoProofGt)
