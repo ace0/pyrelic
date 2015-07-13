@@ -1,7 +1,3 @@
-
-
-
-
 #!/usr/bin/eval python
 
 from testcommon import *

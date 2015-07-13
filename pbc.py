@@ -6,6 +6,7 @@ Interface to the Barreto Naehrig 256-bit pairing-based elliptic curves
 from relic import librelic
 from ctypes import byref, c_int, c_ubyte
 from ec import *
+from ec import _getCachedValue, _equal, _serialize, _deserialize
 from bi import *
 from common import *
 
@@ -248,24 +249,6 @@ def _add(a, b, relicAdd):
     return result
 
 
-def _equal(a, b, identityLong, relicCompare):
-    """
-    Compares element @a to @b. If @b is @identityLong, returns 
-    a.isIdentity(). Otherwise, normalize a and b and use the relicCompare
-    function to test for equality.
-    """
-    # Check for an identity comparison.
-    if isinstance(b, (long, int)) and b == identityLong:
-        return a.isIdentity()
-
-    # Verify type and fix normalization for a valid comparison.
-    assertSameType(a, b)
-    a.normalize()
-    b.normalize()
-
-    # Compare against another G2 element.
-    return relicCompare(byref(a), byref(b)) == EQUAL
-
 
 def _scalarMultiply(P, a, n, relicScalarMult):
     """
@@ -304,24 +287,6 @@ def _genMultiply(a, element, n, relicGenMultiplyFunc):
     return result
 
 
-def _deserialize(x, elementType, compress, relicReadBinFunc):
-    """
-    Deserializes a bytearray @x, into an @element of the correct type,
-    using the a relic read_bin function and the specified @compressed flag.
-    This is the underlying implementation for deserialize G1, G2, and Gt.
-    """
-    # Convert the bytearray into an appropriately sized ctypes array of bytes
-    b = (c_ubyte*len(x))(*bytearray(x))
-
-    # The compression flag is an integer.
-    flag = c_int(compress)
-
-    # Deserialize using the read function.
-    result = elementType()
-    relicReadBinFunc(byref(result), byref(b), len(x), flag)
-    return result
-
-
 def deserializeG1(x, compressed=True):
     """
     Deserializes an array of bytes, @x, into a G1 element.
@@ -341,20 +306,6 @@ def deserializeGt(x, compressed=True):
     Deserializes an array of bytes, @x, into a Gt element.
     """
     return _deserialize(x, GtElement, compressed, librelic.gt_read_bin_abi)
-
-
-def _getCachedValue(obj, relicFunc, resultType):
-    """
-    Retrieves a value from obj.cached (if not None) or calls @relicFunc and 
-    caches the result (of @resultType) int obj.cached.
-
-    This is a common implementation for orderG1/G2/Gt and generatotG1/G2/Gt
-    """
-    # If the value has not been previously cached, fetch 
-    if not obj.cached:
-        obj.cached = resultType()
-        relicFunc(byref(obj.cached))
-    return obj.cached
 
 
 def generatorG1():
@@ -494,24 +445,6 @@ def randomGt():
     Select a random element from Gt.
     """
     return _random(GtElement, librelic.gt_rand)
-
-
-def _serialize(element, compress, relicSizeBinFunc, relicWriteBinFunc):
-    """
-    Serializes an @element using the proper function @relicWriteBinFunc into
-    a bytearray. @compress specifies whether the element should be compressed.
-    @relicSizeBinFunc is used to determine the size of the serialized output.
-    This is underlying implementation for serialize G1, G2, and Gt.
-    """
-    cFlag = c_int(compress)
-    size = relicSizeBinFunc(byref(element), cFlag)
-
-    # Make an array of the correct size. 
-    binArray = (c_ubyte*size)()
-
-    # Serialize
-    relicWriteBinFunc(byref(binArray), size, byref(element), cFlag)
-    return bytearray(binArray)
 
 
 def serializeG1(x, compress=True):

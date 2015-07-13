@@ -49,7 +49,11 @@ if librelic.core_init() != 0:
 
 # Set the pairing based curve (PC) parameters.
 if librelic.pc_param_set_any_abi() != 0:
-    raise Exception("Could not set curve parameters")
+    raise Exception("Could not set PBC parameters")
+
+# Set the elliptic curve parameters.
+if librelic.ec_param_set_any_abi() != 0:
+    raise Exception("Could not set EC parameters")
 
 
 @atexit.register

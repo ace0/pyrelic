@@ -142,7 +142,7 @@ class G2Tests(AdditiveGroupArithmetic):
         """
         p = randomG2()
         r = randomZ()
-        q1 = p.mul_fast(r)
+        q1 = p.mul_table(r)
         q2 = p.mul_basic(r)
         self.assertEqual(q1, q2)
 
@@ -154,7 +154,7 @@ class G2Tests(AdditiveGroupArithmetic):
         p = randomG2()
         r = randomZ()
 
-        fastTime = timeit(lambda:p.mul_fast(r), number=100)
+        fastTime = timeit(lambda:p.mul_table(r), number=100)
         basicTime = timeit(lambda:p.mul_basic(r), number=100)
         self.assertLess(fastTime, basicTime)
 
