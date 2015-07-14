@@ -86,18 +86,21 @@ class ec1Element(ecElementBase):
             ("normalized", c_int)
         ]
 
+    def __add__(self, other):
+        """
+        Adds to EC elements.
+        """
+        assertSameType(self, other)
+        return relicResult(librelic.ec_add_abi, ec1Element, self, other)
+
 
     def __mul__(self, k):
         """
         Computes kP where P is this element and k is an integer type.
         """
-        # Convert and ensure k is an integer type.
-        k = coerceBigInt(k)
-
         # Perform multiplication and return the result
-        result = ec1Element()
-        librelic.ec_mul_abi(byref(result), byref(self), byref(k))
-        return result
+        return relicResult(librelic.ec_mul_abi, ec1Element, self,
+            coerceBigInt(k))
 
 
     def __eq__(self, other):
@@ -119,7 +122,7 @@ class ec1Element(ecElementBase):
         """
         There is no in-place normalization for EC elements.
         """
-        pass
+        relicResult(librelic.ec_norm_abi, None, self, self)
 
 
 class ec2Element(ecElementBase):
@@ -166,6 +169,27 @@ class lwnafTable(Structure):
     # relic_epx.h: EPX_TABLE_LWNAF
     SIZE = 4
     _fields_ = [ ("values", ec2Element*SIZE) ]
+
+
+def relicResult(relicFunc, resultType, *args):
+    """
+    Calls @relicFunc with a list of @args that are passed by reference. If
+    @resultType is set, a new object of this type is created, passed as the
+    first argument, and returned by this function.
+    """
+    result = None
+
+    # If there is a return type, it becomes the first parameter.
+    if resultType is not None:
+        result = resultType()
+        args = (result,) + args
+
+    # Pass all parameters byref
+    params = [byref(x) for x in list(args)]
+
+    # Call the function and return our result.
+    relicFunc(*params)
+    return result
 
 
 def _deserialize(x, elementType, compress, relicReadBinFunc):
@@ -263,15 +287,6 @@ def formatPoint(point, affine):
     return fmt.format(*coordText)
 
 
-def relicGet(relicFunc, elementType):
-    """
-    Retrieve a single element of @elementType by calling the "get" @relicFunc
-    """
-    result = elementType()    
-    relicFunc(byref(result))
-    return result
-
-
 def generatorEc():
     """
     Retrieves the generator <G> = ECGroup
@@ -280,6 +295,13 @@ def generatorEc():
         ec1Element)
 
 generatorEc.cached = None
+
+
+def randomEcPoint():
+    """
+    Generates a random element from the ECGroup.
+    """
+    return relicResult(librelic.ec_rand_abi, ec1Element)
 
 
 def serializeEc(P, compress=True):
