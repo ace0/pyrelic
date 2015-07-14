@@ -5,7 +5,13 @@ from relic import librelic
 from ec import *
 from bi import *
 from common import *
-import hashlib
+
+
+def _exp(cert, idText):
+    """
+    Generates the exponent e by hashing @cert and @idText.
+    """
+    return hashZ(serializeEc(cert) + idText)
 
 
 def sign(idText, request, caPrivkey):
@@ -18,7 +24,9 @@ def sign(idText, request, caPrivkey):
     """
     # Verify input types
     assertType(request, ec1Element)
-    assertType(caPrivkey, BigInt)
+    assertScalarType(caPrivkey)
+
+    # Switch to new notation
     R = request
     d = caPrivkey
     G = generatorEc()
@@ -29,13 +37,12 @@ def sign(idText, request, caPrivkey):
     k = randomZ(N)
     P = R + k*G
 
-    # Hash the identity string into an integer
-    # BUG: This needs to be H(cert(P) || idText)
-    e = hashZ(idText)
+    # Hash the identity string and implicit cert into an integer
+    e = _exp(P, idText)
 
     # Compute the private key contribution
     r = (e*k + d) % N
-    return (r, cert)
+    return (r, P)
 
 
 def validate(idText, alpha, r, cert, caPubkey):
@@ -47,12 +54,17 @@ def validate(idText, alpha, r, cert, caPubkey):
     @raises Exception if the certificate response is invalid.
     @returns (privkey, pubkey)
     """
-    # TODO: Verify types
+    # Verify parameter types
+    assertScalarType(alpha)
+    assertScalarType(r)
+    assertType(cert, ec1Element)
+    assertType(caPubkey, ec1Element)
+
     G = generatorEc()
 
     # Compute the private key @s
-    e = hashZ(idText, cert)
-    s = e*alpha + r
+    e = _exp(cert, idText)
+    s = (e*alpha + r) % orderEc()
 
     # Compute the public key two ways: using the privkey and using the cert
     # (the way a client will compute it)
@@ -62,9 +74,10 @@ def validate(idText, alpha, r, cert, caPubkey):
     # Using the cert
     S2 = e*cert + caPubkey
 
-    # Compare the results and raise an exception if they don't match
+    # The two techniques should produce the same pubkey value -- raise an
+    # exception if they don't match
     if S1 != S2:
-        raise Exception("Implicit certifcate response failed validation")
+        raise Exception("Implicit certification response failed validation")
     return s, S1
 
 
@@ -77,15 +90,11 @@ def recoverPubkey(idText, cert, caPubkey):
     assertType(cert, ec1Element)
     assertType(caPubkey, ec1Element)
 
-    # Recompute the pubkey
-    e = hashZ(idText, cert)
-    S = e*cert + caPubkey
-    return S
+    # Compute the pubkey
+    return _exp(cert, idText)*cert + caPubkey
 
 
 
 # LEFT OFF:
-# Building implicit certs => need to write unit tests
-# Need client implicit cert construction factored from the above
 # Integrate ECQV-EDH into hopsocket and test it out
 # Add AES-GCM crypto to payloads and we'll have a proper secure channel!    

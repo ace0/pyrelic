@@ -156,8 +156,31 @@ class EcqvTests(TestCase):
         idText = "delphi.remote-crypto.io"
 
         r, cert = sign(idText, alphaG, caPrivkey)
-        validate(idText, alpha, r, cert, caPubkey)
-        dp(r=r, cert=cert)
+        s,S = validate(idText, alpha, r, cert, caPubkey)
+
+
+    def testRecoverPubkey(self):
+        """
+        Tests that client and server can generate the same pubkey.
+        """
+        # Generate the cert
+        alpha, alphaG = self.serverSecret
+        caPrivkey, caPubkey = self.caKeyPair
+        idText = "delphi.remote-crypto.io"
+        r, cert = sign(idText, alphaG, caPrivkey)
+
+        # Generate the pubkey using the server method
+        _,pubkey1 = validate(idText, alpha, r, cert, caPubkey)
+
+        # Generate the pubkey using the client method
+        pubkey2 = recoverPubkey(idText, cert, caPubkey)
+
+        # Compare
+        self.assertEqual(pubkey1, pubkey2)        
+
+
+
+
 
 
 # Run!
