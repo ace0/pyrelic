@@ -330,7 +330,7 @@ def generatorGt():
 
 
 # Initialize generator cached values to None
-generatorG1.cached, generatorG2.cached, generatorGt = None, None, None
+generatorG1.cached, generatorG2.cached, generatorGt.cached = None, None, None
 
 
 def getBuffer(x):

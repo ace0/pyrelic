@@ -21,13 +21,19 @@ def genKw(w,msk,z):
 
 def getDelta(original, update):
     """
-    Generates an update token \delta_{k->k'}.
+    Generates an update token delta_{k->k'}.
     @original: values for k: (w,msk,s)
     @update: values for kPrime: (w',msk',s')
+    @return (delta, p'): @delta = k'/k, @p' is a new pubkey based on k'.
     """
+    # Compute both keys
     k = genKw(*original)
     kPrime = genKw(*update)
-    return kPrime * inverse(k, orderGt())
+
+    # Compute delta,p'
+    delta = kPrime * inverse(k, orderGt())
+    pPrime = generatorGt()**kPrime
+    return delta,pPrime
 
 
 def wrap(x):

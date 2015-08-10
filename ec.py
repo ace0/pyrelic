@@ -228,7 +228,6 @@ def _equal(a, b, identityLong, relicCompare):
     return relicCompare(byref(a), byref(b)) == EQUAL
 
 
-
 def _getCachedValue(obj, relicFunc, resultType):
     """
     Retrieves a value from obj.cached (if not None) or calls @relicFunc and 

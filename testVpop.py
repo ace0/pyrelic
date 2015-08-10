@@ -158,7 +158,7 @@ class VpopTests(TestCase):
 
     def testUpdate(self):
         """
-        Tests updating an encrypted value to a new key (w).
+        Tests updating an encrypted value to a new key.
         """
         wPrime = "Definitely not the original value w"
         sPrime = "Totally new state value"
@@ -167,7 +167,7 @@ class VpopTests(TestCase):
         z = simpleProto(w,t,msk,s,m)
 
         # Get an update token and apply it
-        delta = getDelta((w,msk,s), (wPrime,msk,sPrime))
+        delta,_ = getDelta((w,msk,s), (wPrime,msk,sPrime))
         zPrime1 = update(z, delta)
 
         # Re-run the protocol under the new inputs
