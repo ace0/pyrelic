@@ -31,11 +31,18 @@ def getDelta(original, update):
     kPrime = genKw(*update)
 
     # Compute delta,p'
-    delta = kPrime * inverse(k, orderGt())
+    delta = (kPrime * inverse(k, orderGt())) % orderGt()
     pPrime = generatorGt()**kPrime
     return delta,pPrime
 
 
+def update(z,delta):
+    """
+    Updates a result @z using the update token @delta.
+    """
+    return z**delta
+
+    
 def wrap(x):
     """
     Wraps an element or integer type by serializing it and base64 encoding 
@@ -70,6 +77,7 @@ unwrapG1 = lambda x: _unwrap(x, deserializeG1)
 unwrapG2 = lambda x: _unwrap(x, deserializeG2)
 unwrapGt = lambda x: _unwrap(x, deserializeGt)
 unwrapLong = lambda x: long(x, 16)
+unwrapDelta = unwrapLong
 
 
 def _wrap(x, serializeFunc, encodeFunc=base64.urlsafe_b64encode, compress=True):

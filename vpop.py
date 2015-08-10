@@ -96,13 +96,6 @@ def verify(x, t, y, pi, errorOnFail=True):
         return False
 
 
-def update(z,delta):
-    """
-    Updates a result @z using the update token @delta.
-    """
-    return z**delta
-
-
 def blind(m, hashfunc=hashG1):
     """
     Blinds an arbitrary string or byte array @m using an ephemeral key @r
