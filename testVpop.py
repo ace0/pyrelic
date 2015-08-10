@@ -5,6 +5,14 @@ import unittest
 from unittest import TestCase
 from vpop import *
 
+# Global values for test cases
+w = "Some super-secret ensemble key selector"
+t = "Totally random and unpredictable tweak"
+m = "This is a secret message"
+msk = "lkjasdf;lkjas;dlkfa;slkdf;laskdjf"
+s = "Super secret table value"
+
+
 class VpopTests(TestCase):
     """
     Tests for the Vpop class.
@@ -34,11 +42,6 @@ class VpopTests(TestCase):
         is deterministic.
         """
         Z = None
-        w = "Some super-secret ensemble key selector"
-        t = "Totally random and unpredictable tweak"
-        m = "This is a secret message"
-        msk = "lkjasdf;lkjas;dlkfa;slkdf;laskdjf"
-        s = "Super secret table value"
 
         for _ in range(n):
             r, x = blind(m)
@@ -119,13 +122,6 @@ class VpopTests(TestCase):
         """
         Tests a full pass of the protocol.
         """
-        # TODO: Factor these into class variables
-        w = "Some super-secret ensemble key selector"
-        t = "Totally random and unpredictable tweak"
-        m = "This is a secret message"
-        msk = "lkjasdf;lkjas;dlkfa;slkdf;laskdjf"
-        s = "Super secret table value"
-
         # Run the protocol 
         r, x = blind(m)
         y,kw,tTilde = eval(w,t,x,msk,s)
@@ -140,12 +136,6 @@ class VpopTests(TestCase):
         """
         Tests that multiple passes of the protocol produce the same z,p values.
         """
-        w = "Some super-secret ensemble key selector"
-        t = "Totally random and unpredictable tweak"
-        m = "This is a secret message"
-        msk = "lkjasdf;lkjas;dlkfa;slkdf;laskdjf"
-        s = "Super secret table value"
-
         # Run the protocol and report the z,p values
         def proto():
             r, x = blind(m)
@@ -164,6 +154,38 @@ class VpopTests(TestCase):
             self.assertEqual(P, p)
 
         repeat(protoCheck, n=n)
+
+
+    def testUpdate(self):
+        """
+        Tests updating an encrypted value to a new key (w).
+        """
+        wPrime = "Definitely not the original value w"
+        sPrime = "Totally new state value"
+
+        # Run the protocol under the original inputs
+        z = simpleProto(w,t,msk,s,m)
+
+        # Get an update token and apply it
+        delta = getDelta((w,msk,s), (wPrime,msk,sPrime))
+        zPrime1 = update(z, delta)
+
+        # Re-run the protocol under the new inputs
+        zPrime2 = simpleProto(wPrime,t,msk,sPrime,m)
+
+        # Compare z' 
+        self.assertEqual(zPrime1, zPrime2)
+
+
+def simpleProto(w,t,msk,s,m):
+    """
+    Runs the protocol without generating or checking proofs and returns
+    the result @z.
+    """
+    r,x = blind(m)
+    y,_,_ = eval(w,t,x,msk,s)
+    return deblind(r, y)
+
 
 # Run!
 if __name__ == '__main__':

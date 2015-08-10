@@ -19,6 +19,17 @@ def genKw(w,msk,z):
     return BigInt(longFromString(b) % long(orderGt()))
 
 
+def getDelta(original, update):
+    """
+    Generates an update token \delta_{k->k'}.
+    @original: values for k: (w,msk,s)
+    @update: values for kPrime: (w',msk',s')
+    """
+    k = genKw(*original)
+    kPrime = genKw(*update)
+    return kPrime * inverse(k, orderGt())
+
+
 def wrap(x):
     """
     Wraps an element or integer type by serializing it and base64 encoding 

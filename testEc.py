@@ -179,10 +179,6 @@ class EcqvTests(TestCase):
         self.assertEqual(pubkey1, pubkey2)        
 
 
-
-
-
-
 # Run!
 if __name__ == '__main__':
     unittest.main()

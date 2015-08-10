@@ -36,33 +36,44 @@ def newKeyPair():
     return x, xG
 
 
-def sharedKeyServer(eClientPubkey, eServerPrivkey, ltServerPrivkey, assocData):
+def sharedKeyServer(client, server, assocData):
     """
     Generates a shared key for the server.
-    @eClientPubkey: Client's ephemeral DH share
-    @eServerPrivkey: Server's ephemeral DH share
-    @ltServerPrivkey: Serverls long-term private key
+    @client: must have the attribute: ePubkey
+    @server: must have the attributes: ePrivkey, ltPrivkey
     @assocData: A string containg associated data to use when building the 
      shared secret key.
     """
-    # Switch to compact and common notation
-    X, y, s = eClientPubkey, eServerPrivkey, ltServerPrivkey
+    # Switch to compact notation
+    X, y, s = client.ePubkey, server.ePrivkey, server.ltPrivkey
+
+    # Verify types
+    assertType(X, ec1Element)
+    assertScalarType(y)
+    assertScalarType(s)
+
+    # Combine our parameters and generate the shared key.
     xy = X*y
     xs = X*s
     return genSharedKey(xy, xs, assocData)
 
 
-def sharedKeyClient(eClientPrivKey, eServerPubkey, ltServerPubkey, assocData):
+def sharedKeyClient(client, server, assocData):
     """
-    Generates a shared key for the server.
-    @eClientPubkey: Client's ephemeral DH share
-    @eServerPubkey: Server's ephemeral DH share
-    @ltServerPubkey: Server's long-term pubkey key
+    Generates a shared key for the client.
+    @client: must have attribute ePrivkey
+    @server: must have attributes ePrivkey, ltPrivkey
     @assocData: A string containg associated data to use when building the 
      shared secret key.
     """
-    # Switch to compact and common notation
-    x, Y, S  = eClientPrivKey, eServerPubkey, ltServerPubkey
+    # Switch to compact notation
+    x, Y, S  = client.ePrivkey, server.ePubkey, server.ltPubkey
+
+    # Verify types
+    assertScalarType(x)
+    assertType(Y, ec1Element)
+    assertType(S, ec1Element)
+
     xy = x*Y
     xs = x*S
     return genSharedKey(xy, xs, assocData)

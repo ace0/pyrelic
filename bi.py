@@ -233,11 +233,11 @@ def inverse(x, p, errorOnFail=False):
     # involves less type conversions. On the initial development platform
     # Lehmer's algorithm was the most performant: we call it directly.
     gcd = BigInt()
-    inverse = BigInt()
+    inv = BigInt()
 
     # bn_gcd_ext(c, d, e, a, b) computes: c = a*d + b*e
     # We take x=a. b=p, and expect: c = 1 = gcd(x,p), d = 1/x, and e is unused.
-    librelic.bn_gcd_ext_lehme(byref(gcd), byref(inverse), None, byref(x), byref(p))
+    librelic.bn_gcd_ext_lehme(byref(gcd), byref(inv), None, byref(x), byref(p))
 
     # Check that GCD == 1 
     if gcd != 1:
@@ -247,7 +247,7 @@ def inverse(x, p, errorOnFail=False):
         else:
             return None
 
-    return inverse
+    return inv
 
 
 def randomZ(maximum=None, bits=256):

@@ -92,9 +92,3 @@ def recoverPubkey(idText, cert, caPubkey):
 
     # Compute the pubkey
     return _exp(cert, idText)*cert + caPubkey
-
-
-
-# LEFT OFF:
-# Integrate ECQV-EDH into hopsocket and test it out
-# Add AES-GCM crypto to payloads and we'll have a proper secure channel!    

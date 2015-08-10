@@ -153,13 +153,12 @@ class ec12Element(ecElementBase):
     # DEBUG: Reduce the printing degrees so the output is readable
     _str_degree_max = 1
 
-    # This maps to the type ep2_(s)t in the relic_ep.h. It is typedef'd to the 
-    # g2_t type.
+    # This maps to the type fp12_(s)t in the relic_ep.h. It is typedef'd to the 
+    # gt_t type.
     _fields_ = [
             ("points", ecPoint*_degree),
             ("normalized", c_int)
         ]
-
 
 class lwnafTable(Structure):
     """
